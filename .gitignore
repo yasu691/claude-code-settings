@@ -1,3 +1,15 @@
-projects/
-statsig/
-todos/
+# Ignore everything by default.
+*
+
+# Track only portable Claude settings.
+!.gitignore
+!CLAUDE.md
+!settings.json
+!commands/
+!commands/**
+!coding_rules/
+!coding_rules/**
+!README.md
+
+# Never track macOS metadata.
+.DS_Store
