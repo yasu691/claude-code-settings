@@ -7,9 +7,23 @@
 !settings.json
 !commands/
 !commands/**
-!coding_rules/
-!coding_rules/**
+!agents/
+!agents/**
+!skills/
+!skills/**
+!rules/
+!rules/**
+!hooks/
+!hooks/**
+!MCP-SETUP.md
+!mcp-servers.template.json
 !README.md
+
+__pycache__/
+__pycache__/**
+
+# Keep machine-specific settings local.
+settings.local.json
 
 # Never track macOS metadata.
 .DS_Store

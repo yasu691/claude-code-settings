@@ -1,3 +1,19 @@
 {
-  "alwaysThinkingEnabled": true
+  "alwaysThinkingEnabled": true,
+  "plansDirectory": "./plans",
+  "respectGitignore": true,
+  "showTurnDuration": true,
+  "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /Users/yasutaka/.claude/hooks/security-guidance/security_reminder_hook.py"
+          }
+        ],
+        "matcher": "Edit|Write|MultiEdit"
+      }
+    ]
+  }
 }
