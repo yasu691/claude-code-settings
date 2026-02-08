@@ -2,6 +2,12 @@
 
 `~/.claude` のうち、PC間で共有したい Claude Code 設定を GitHub で管理するためのリポジトリ。
 
+## リポジトリ方針
+
+- このリポジトリは Claude Code 向け設定のみを管理する
+- 管理対象は `~/.claude` 配下のファイルに限定する
+- Codex 向け設定（例: `~/AGENTS.md`, `~/.codex/**`）はこのリポジトリで管理しない
+
 ## 追跡対象
 
 - `.gitignore`
