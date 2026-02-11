@@ -11,9 +11,31 @@
 ## 追跡対象
 
 - `.gitignore`
+- `README.md`
 - `CLAUDE.md`
 - `settings.json`
+- `MCP-SETUP.md`
+- `mcp-servers.template.json`
 - `commands/`
+- `agents/`
+- `skills/`
+- `rules/`
+
+## 導入済み拡張（2026-02-08）
+
+- Skills
+  - `skills/frontend-design/SKILL.md`
+  - `skills/frontend-patterns/SKILL.md`
+- Commands
+  - `commands/commit.md`
+  - `commands/commit-push-pr.md`
+  - `commands/clean_gone.md`
+  - `commands/code-review.md`
+- Hooks
+  - `hooks/security-guidance/security_reminder_hook.py`
+  - `settings.json` の `hooks.PreToolUse` に security guidance を設定済み
+
+※ 現在の `.gitignore` 設定では `hooks/` は追跡対象外（ローカル運用）。
 
 ## 追跡しないもの
 
@@ -35,7 +57,7 @@ cd ~/.claude
 git init
 git remote add origin https://github.com/yasu691/claude-code-settings.git 2>/dev/null || true
 git fetch origin
-git checkout origin/main -- .gitignore CLAUDE.md settings.json commands/
+git checkout origin/main -- .gitignore README.md CLAUDE.md settings.json MCP-SETUP.md mcp-servers.template.json commands/ agents/ skills/ rules/
 ```
 
 ## 日常運用
@@ -44,7 +66,7 @@ git checkout origin/main -- .gitignore CLAUDE.md settings.json commands/
 
 ```bash
 cd ~/.claude
-git add .gitignore CLAUDE.md settings.json commands/
+git add .gitignore README.md CLAUDE.md settings.json MCP-SETUP.md mcp-servers.template.json commands/ agents/ skills/ rules/
 git commit -m "Update Claude settings"
 git push origin main
 ```
