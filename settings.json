@@ -1,6 +1,6 @@
 {
+  "respectGitignore": true,
   "alwaysThinkingEnabled": true,
   "plansDirectory": "./plans",
-  "respectGitignore": true,
   "showTurnDuration": true
 }
