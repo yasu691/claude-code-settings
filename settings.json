@@ -2,5 +2,6 @@
   "respectGitignore": true,
   "alwaysThinkingEnabled": true,
   "plansDirectory": "./plans",
-  "showTurnDuration": true
+  "showTurnDuration": true,
+  "effortLevel": "medium"
 }
