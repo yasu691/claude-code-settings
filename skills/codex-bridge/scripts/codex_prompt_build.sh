@@ -10,28 +10,31 @@
 #   -f, --files FILES       対象ファイル（カンマ区切り）
 #   -e, --evidence FILE     エラーログや差分ファイルのパス
 #   -c, --constraints TEXT  追加制約
-#   -o, --output FILE       出力ファイル (デフォルト: .codex/prompt.md)
 #   -l, --lines NUM         証拠の最大行数 (デフォルト: 200)
+#   -F, --file-lines NUM    ソースファイルの最大行数 (デフォルト: 500)
 #   -h, --help              ヘルプを表示
+#
+# 出力:
+#   生成したプロンプトファイルのパスを stdout に出力。
+#   ログは stderr へ。
+#
+# 環境変数:
+#   CODEX_EXEC_ID           実行ID (未指定時は自動生成)
 #
 
 set -euo pipefail
 
-# スクリプトのディレクトリを取得
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL_DIR="$(dirname "$SCRIPT_DIR")"
 CODEX_DIR="${SKILL_DIR}/.codex"
-TEMPLATE_FILE="${SKILL_DIR}/templates/prompt.md.tmpl"
 
-# デフォルト値
 GOAL=""
 FILES=""
 EVIDENCE_FILE=""
 CONSTRAINTS=""
-OUTPUT_FILE="${CODEX_DIR}/prompt.md"
 MAX_EVIDENCE_LINES=200
+MAX_FILE_LINES=500
 
-# ヘルプ表示
 show_help() {
     cat << EOF
 Codex用プロンプト生成スクリプト
@@ -46,18 +49,22 @@ Codex用プロンプト生成スクリプト
   -f, --files FILES       対象ファイル（カンマ区切り）
   -e, --evidence FILE     エラーログや差分ファイルのパス
   -c, --constraints TEXT  追加制約
-  -o, --output FILE       出力ファイル (デフォルト: .codex/prompt.md)
   -l, --lines NUM         証拠の最大行数 (デフォルト: 200)
+  -F, --file-lines NUM    ソースファイルの最大行数 (デフォルト: 500)
   -h, --help              このヘルプを表示
 
 例:
   $(basename "$0") --goal "バグを修正して" --files "src/api.ts,src/utils.ts"
   $(basename "$0") -g "エラーの原因を調査" -f "src/main.ts" -e "logs/error.log"
   $(basename "$0") --goal "リファクタリング" --constraints "型安全性を維持"
+
+出力:
+  生成されたプロンプトファイルのパスを stdout に出力します。
+  続けて codex_exec.sh に渡してください:
+    PROMPT=\$($(basename "$0") --goal "..."); codex_exec.sh "\$PROMPT"
 EOF
 }
 
-# 引数解析
 while [[ $# -gt 0 ]]; do
     case $1 in
         -g|--goal)
@@ -76,12 +83,12 @@ while [[ $# -gt 0 ]]; do
             CONSTRAINTS="$2"
             shift 2
             ;;
-        -o|--output)
-            OUTPUT_FILE="$2"
-            shift 2
-            ;;
         -l|--lines)
             MAX_EVIDENCE_LINES="$2"
+            shift 2
+            ;;
+        -F|--file-lines)
+            MAX_FILE_LINES="$2"
             shift 2
             ;;
         -h|--help)
@@ -101,20 +108,19 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# 必須引数の確認
 if [[ -z "$GOAL" ]]; then
     echo "Error: --goal は必須です" >&2
     show_help
     exit 1
 fi
 
-# 出力ディレクトリの確認
-OUTPUT_DIR="$(dirname "$OUTPUT_FILE")"
-if [[ ! -d "$OUTPUT_DIR" ]]; then
-    mkdir -p "$OUTPUT_DIR"
-fi
+# 実行IDの決定（マルチエージェント対応: 各実行にユニークなファイルパスを割り当て）
+EXEC_ID="${CODEX_EXEC_ID:-$(date +%Y%m%d_%H%M%S)_$$}"
+OUTPUT_FILE="${CODEX_DIR}/${EXEC_ID}_prompt.md"
 
-# ファイルリストの生成
+mkdir -p "$CODEX_DIR"
+
+# ソースファイルの埋め込み（行数上限付き）
 generate_file_list() {
     local files="$1"
     if [[ -z "$files" ]]; then
@@ -125,12 +131,23 @@ generate_file_list() {
     echo ""
     IFS=',' read -ra FILE_ARRAY <<< "$files"
     for file in "${FILE_ARRAY[@]}"; do
-        file="$(echo "$file" | xargs)"  # trim whitespace
+        file="${file#"${file%%[![:space:]]*}"}"  # trim leading whitespace
+        file="${file%"${file##*[![:space:]]}"}"  # trim trailing whitespace
         if [[ -f "$file" ]]; then
+            local total_lines
+            total_lines=$(wc -l < "$file")
             echo "### $file"
-            echo '```'
-            cat "$file"
-            echo '```'
+            if [[ $total_lines -gt $MAX_FILE_LINES ]]; then
+                echo "（${total_lines}行中、最初の${MAX_FILE_LINES}行を表示）"
+                echo '```'
+                head -n "$MAX_FILE_LINES" "$file"
+                echo '```'
+                echo "... (以下省略)"
+            else
+                echo '```'
+                cat "$file"
+                echo '```'
+            fi
             echo ""
         else
             echo "### $file (ファイルが見つかりません)"
@@ -139,7 +156,7 @@ generate_file_list() {
     done
 }
 
-# 証拠の読み込み
+# 証拠の読み込み（行数上限付き）
 read_evidence() {
     local evidence_file="$1"
     local max_lines="$2"
@@ -170,25 +187,14 @@ read_evidence() {
     fi
 }
 
-# 追加制約の生成
-format_constraints() {
-    local constraints="$1"
-    if [[ -n "$constraints" ]]; then
-        echo "- $constraints"
-    fi
-}
-
-# ファイルリスト（パスのみ）
 get_file_paths() {
-    local files="$1"
-    if [[ -z "$files" ]]; then
-        echo "(未指定)"
-    else
-        echo "$files"
-    fi
+    if [[ -z "$1" ]]; then echo "(未指定)"; else echo "$1"; fi
 }
 
-# プロンプト生成
+format_constraints() {
+    if [[ -n "$1" ]]; then echo "- $1"; fi
+}
+
 generate_prompt() {
     cat << EOF
 # Role
@@ -220,28 +226,46 @@ $(read_evidence "$EVIDENCE_FILE" "$MAX_EVIDENCE_LINES")
 
 ## 1. Diagnosis
 原因仮説と根拠を説明してください。
+- 何が問題なのか
+- なぜそう判断したか（コードの該当箇所を引用）
 
 ## 2. Plan
 最短手順を優先度付きで列挙してください。
+1. [優先度: 高] 最初にすべきこと
+2. [優先度: 中] 次にすべきこと
+3. ...
 
 ## 3. Concrete edits
-ファイル別に「どこをどう変えるか」を具体的に示してください。
-差分形式またはコードブロックで明示してください。
+ファイル別に「どこをどう変えるか」を差分形式で示してください。
+
+\`\`\`diff
+- 削除する行
++ 追加する行
+\`\`\`
 
 ## 4. Risks & checks
 副作用のリスクと、確認すべきテストや検証項目を列挙してください。
+
+### リスク
+- [ ] リスク1: 説明
+
+### 確認項目
+- [ ] テストを実行
+- [ ] 動作確認
 EOF
 }
 
-# プロンプト生成と保存
 echo "=== プロンプト生成 ===" >&2
 echo "目標: $GOAL" >&2
 echo "ファイル: ${FILES:-未指定}" >&2
 echo "証拠: ${EVIDENCE_FILE:-未提供}" >&2
+echo "実行ID: $EXEC_ID" >&2
 echo "出力先: $OUTPUT_FILE" >&2
 echo "" >&2
 
 generate_prompt > "$OUTPUT_FILE"
 
 echo "=== プロンプト生成完了 ===" >&2
-echo "生成されたプロンプト: $OUTPUT_FILE" >&2
+
+# 生成したプロンプトファイルのパスを stdout に出力（codex_exec.sh に渡す用）
+echo "$OUTPUT_FILE"
