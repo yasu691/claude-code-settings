@@ -21,7 +21,11 @@
 - `rules/security.md`
 - `rules/git-workflow.md`
 
+## ツール指定
+
+- Python を使う場合は必ず `uv` を使用する（`pip` / `pip3` / `python -m pip` は使わない）
+
 ## 運用ルール
 
-- この `CLAUDE.md` は短く保ち、詳細ルールは `rules/` に追加する
+- この `CLAUDE.md` は短く保ち、詳細ルールは `rules/` に追加する（1行で済む横断的制約は CLAUDE.md に直接置いてよい）
 - 共通設定は `settings.json`、個人設定は `settings.local.json` に分離する
