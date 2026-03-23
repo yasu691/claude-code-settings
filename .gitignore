@@ -19,6 +19,9 @@
 !mcp-servers.template.json
 !README.md
 
+# Codex bridge runtime artifacts.
+skills/codex-bridge/.codex/
+
 __pycache__/
 __pycache__/**
 
