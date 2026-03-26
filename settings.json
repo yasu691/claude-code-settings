@@ -2,5 +2,9 @@
   "respectGitignore": true,
   "alwaysThinkingEnabled": true,
   "plansDirectory": "./plans",
-  "showTurnDuration": true
+  "showTurnDuration": true,
+  "statusLine": {
+    "type": "command",
+    "command": "uv run python3 ~/.claude/statusline.py"
+  }
 }
