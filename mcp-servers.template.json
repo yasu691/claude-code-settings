@@ -1,5 +1,13 @@
 {
   "mcpServers": {
+    "todoist": {
+      "_comment": "user scope のみ登録すること。.mcp.json には追加しない（共有ホーム保護）",
+      "command": "npx",
+      "args": ["-y", "@doist/todoist-ai"],
+      "env": {
+        "TODOIST_API_KEY": "${TODOIST_API_KEY}"
+      }
+    },
     "context7": {
       "command": "npx",
       "args": ["-y", "@context7/mcp-server"]

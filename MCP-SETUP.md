@@ -21,4 +21,5 @@ claude mcp get serena
 
 - `serena` は `uvx` で GitHub ソースから起動する設定
 - `context7` / `playwright` は `npx` 起動設定
+- `context7` のパッケージ名は `@upstash/context7-mcp`（旧: `@context7/mcp-server` は廃止済み）
 - 接続に失敗する場合は、ネットワーク到達性とローカル依存（`npx` / `uvx`）を確認する
