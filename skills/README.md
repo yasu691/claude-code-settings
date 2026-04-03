@@ -15,3 +15,4 @@ Hook には依存せず、明示的に呼び出して使う前提です。
 - `frontend-design`：高品質フロントエンド生成
 - `frontend-patterns`：フロントエンド設計パターン
 - `organize-tasks`：GitHub Projects Inbox整理
+- `azure-config-scan`：AZ CLIでAzure構成を調査しMarkdown化
